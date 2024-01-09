@@ -1,0 +1,11 @@
+{
+  "products": [
+    {
+      "availableCount": 1,
+      "price": {
+        "amount": 10
+      },
+      "name": "Барни - шоколадный дровосек"
+    }
+  ]
+}
