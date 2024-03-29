@@ -1,6 +1,10 @@
+package vm.fp
+
 import kotlinx.serialization.Serializable
-import vm.*
-import vm.Product as VmProduct
+import vm.fp.*
+import vm.oop.Coin
+import vm.oop.MoneyCalculator
+import vm.oop.Product as VmProduct
 
 @Serializable
 class Rubles(val amount: Int)

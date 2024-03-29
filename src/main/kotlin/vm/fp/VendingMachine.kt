@@ -1,4 +1,10 @@
-package vm
+package vm.fp
+
+import vm.oop.Coin
+import vm.oop.Idle
+import vm.oop.MoneyCalculator
+import vm.oop.Paying
+import vm.oop.Product
 
 interface Product<M> {
     var availableCount: Int
@@ -82,7 +88,7 @@ class VendingMachineFsm<M, P : Product<M>, C : Coin<M>>(
                 if (input.product.availableCount == 0)
                     listOf(DisplayProductIsOut(input.product))
                 else {
-                    state = Paying(input.product, calc.zero())
+                    state = vm.oop.Paying(input.product, calc.zero())
                     emptyList()
                 }
             }
