@@ -1,19 +1,19 @@
 package vm.fp
 
-import vm.oop.Coin
-import vm.oop.Idle
-import vm.oop.MoneyCalculator
-import vm.oop.Paying
-import vm.oop.Product
-
 interface Product<M> {
-    var availableCount: Int
     val price: M
 }
 
 interface Coin<M> {
     val value: M
 }
+
+interface MoneyCalculator<M> {
+    fun zero(): M
+    fun add(m1: M, m2: M): M
+    fun isEnough(m1: M, m2: M): Boolean
+}
+
 
 sealed interface VmInput<M, P : Product<M>, C : Coin<M>>
 
@@ -25,10 +25,11 @@ class InsertCoin<M, P : Product<M>, C : Coin<M>>(
     val coin: C
 ) : VmInput<M, P, C>
 
+
 sealed interface VmOutput<M, P : Product<M>, C : Coin<M>>
 
 class DisplayProductIsOut<M, P : Product<M>, C : Coin<M>>(
-    val product: Product<M>
+    val product: P
 ) : VmOutput<M, P, C>
 
 class DisplayProductNotSelected<M, P : Product<M>, C : Coin<M>>
@@ -43,54 +44,31 @@ class EjectProduct<M, P : Product<M>, C : Coin<M>>(
 ) : VmOutput<M, P, C>
 
 
-interface MoneyCalculator<M> {
-    fun zero(): M
-    fun add(m1: M, m2: M): M
-    fun isLessThanOrEqual(m1: M, m2: M): Boolean
-}
+sealed interface VmState<M, P : Product<M>, C : Coin<M>>
 
-private sealed interface VmState<M, P : Product<M>, C : Coin<M>>
-
-private class Idle<M, P : Product<M>, C : Coin<M>>
+class Idle<M, P : Product<M>, C : Coin<M>>
     : VmState<M, P, C>
 
-private class Paying<M, P : Product<M>, C : Coin<M>>(
-    val product: P,
-    var sum: M,
+data class Paying<M, P : Product<M>, C : Coin<M>>(
+    val selected: P,
+    val sum: M,
 ) : VmState<M, P, C>
 
-class VendingMachineFsm<M, P : Product<M>, C : Coin<M>>(
-    private val calc: MoneyCalculator<M>,
-) {
-    private var state: VmState<M, P, C> = Idle()
 
-    fun act(input: VmInput<M, P, C>): List<VmOutput<M, P, C>> =
-        when (input) {
-            is InsertCoin ->
-                when (val st = state) {
-                    is Idle -> listOf(
-                        DisplayProductNotSelected(),
-                        EjectCoin(input.coin),
-                    )
+data class Context<M, P : Product<M>, C : Coin<M>>(
+    val products: Map<P, Int>,
+    val state: VmState<M, P, C>
+)
 
-                    is Paying -> {
-                        st.sum = calc.add(st.sum, input.coin.value)
-                        if (calc.isLessThanOrEqual(st.product.price, st.sum)) {
-                            st.product.availableCount -= 1
-                            state = Idle()
-                            listOf(EjectProduct(st.product))
-                        } else
-                            emptyList()
-                    }
-                }
-
-            is SelectProduct -> {
-                if (input.product.availableCount == 0)
-                    listOf(DisplayProductIsOut(input.product))
-                else {
-                    state = vm.oop.Paying(input.product, calc.zero())
-                    emptyList()
-                }
-            }
-        }
-}
+// pure function
+fun <M, P : Product<M>, C : Coin<M>> vendingMachineStep(
+    calc: MoneyCalculator<M>,
+    ctx: Context<M, P, C>,
+    input: VmInput<M, P, C>
+): Pair<Context<M, P, C>, List<VmOutput<M, P, C>>> =
+    when (input) {
+        is InsertCoin ->
+            TODO()
+        is SelectProduct ->
+            TODO()
+    }

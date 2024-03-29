@@ -1,95 +1,40 @@
 package vm.fp
 
 import kotlinx.serialization.Serializable
-import vm.fp.*
-import vm.oop.Coin
-import vm.oop.MoneyCalculator
-import vm.oop.Product as VmProduct
 
-@Serializable
-class Rubles(val amount: Int)
-
-enum class RubleCoins(override val value: Rubles) : Coin<Rubles> {
-    FIVE(Rubles(5)), TEN(Rubles(10))
+enum class RubleCoin(override val value: Int) : Coin<Int> {
+    FIVE(5), TEN(10)
 }
 
 @Serializable
-class Product(
-    override var availableCount: Int,
-    override val price: Rubles,
+data class NamedProduct(
+    override val price: Int,
     val name: String,
-) : VmProduct<Rubles>
+) : Product<Int>
 
-@Serializable
-data class BootState(val products: List<Product>)
+// pure function
+fun formatMessage(message: VmOutput<Int, NamedProduct, RubleCoin>): String =
+    TODO()
 
-class ConsoleVendingMachine(private val bootState: BootState) {
+class BadInputException(override val message: String) : Exception(message)
 
-    private val fsm = VendingMachineFsm<Rubles, Product, RubleCoins>(
-        object : MoneyCalculator<Rubles> {
-            override fun zero() = Rubles(0)
+// pure function
+fun decodeInput(products: Map<NamedProduct, Int>, input: String)
+        : VmInput<Int, NamedProduct, RubleCoin> {
+    TODO()
+}
 
-            override fun isLessThanOrEqual(m1: Rubles, m2: Rubles) =
-                m1.amount <= m2.amount
-
-            override fun add(m1: Rubles, m2: Rubles) =
-                Rubles(m1.amount + m2.amount)
-        }
-    )
-
-    companion object {
-        val insertCommandRegex = "^i \\d+$".toRegex()
-        val selectCommandRegex = "^s \\d+$".toRegex()
+// IO function
+fun vmRunInfinite(products: Map<NamedProduct, Int>) {
+    val calc = object : MoneyCalculator<Int> {
+        override fun zero() = 0
+        override fun isEnough(m1: Int, m2: Int) = m1 <= m2
+        override fun add(m1: Int, m2: Int) = m1 + m2
     }
 
-    private fun processOutput(
-        messages: List<VmOutput<Rubles, Product, RubleCoins>>
-    ) {
-        for (message in messages)
-            when (message) {
-                is DisplayProductIsOut ->
-                    println("дисплей: продукт закончился")
-
-                is DisplayProductNotSelected ->
-                    println("дисплей: продукт не выбран")
-
-                is EjectCoin ->
-                    println("монеты: монета возвращена: ${message.coin.value.amount}")
-
-                is EjectProduct ->
-                    println("продукты: ваш продукт: ${message.product.name}")
-            }
+    fun run(ctx: Context<Int, NamedProduct, RubleCoin>) {
+        TODO()
     }
 
-    fun runInfinite(): Nothing {
-        println("welcome to vending machine!")
-
-        while (true) {
-            val cmd = readln()
-
-            if (cmd.matches(insertCommandRegex)) {
-                val (_, sAmount) = cmd.split(" ")
-                val coin = when (sAmount.toInt()) {
-                    5 -> RubleCoins.FIVE
-                    10 -> RubleCoins.TEN
-                    else -> {
-                        println("io error: incorrect coin value")
-                        continue
-                    }
-                }
-
-                processOutput(fsm.act(InsertCoin(coin)))
-
-            } else if (cmd.matches(selectCommandRegex)) {
-                val (_, sProductIndex) = cmd.split(" ")
-                val product = bootState.products.getOrNull(sProductIndex.toInt())
-
-                if (product != null)
-                    processOutput(fsm.act(SelectProduct(product)))
-                else
-                    println("io error: product index out of range")
-            } else
-                println("io error: incorrect command")
-        }
-    }
+    run(Context(products, Idle()))
 }

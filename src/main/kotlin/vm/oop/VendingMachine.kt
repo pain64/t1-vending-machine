@@ -1,15 +1,9 @@
 package vm.oop
 
-import vm.Coin
-import vm.Idle
-import vm.MoneyCalculator
-import vm.Paying
-import vm.Product
-
 interface MoneyCalculator<M> {
     fun zero(): M
     fun add(m1: M, m2: M): M
-    fun enough(expected: M, actual: M): Boolean
+    fun isEnough(expected: M, actual: M): Boolean
 }
 
 interface Product<M> {
@@ -24,11 +18,12 @@ sealed interface State<M, P : Product<M>>
 class Idle<M, P : Product<M>> : State<M, P>
 class Paying<M, P : Product<M>>(var selectedProduct: P, var sum: M) : State<M, P>
 
+// stateful, but no IO
 abstract class AbstractVendingMachine<M, P : Product<M>, C : Coin<M>>(
     private val calculator: MoneyCalculator<M>,
     private val products: MutableMap<P, Int>
 ) {
-    private var state: State<M, P> = vm.Idle()
+    private var state: State<M, P> = Idle()
 
     abstract fun onDisplayProductIsOut(product: P)
     abstract fun onDisplayProductNotSelected()
@@ -41,7 +36,7 @@ abstract class AbstractVendingMachine<M, P : Product<M>, C : Coin<M>>(
 
                 s.sum = calculator.add(s.sum, c.value)
 
-                if (calculator.enough(s.selectedProduct.price, s.sum)) {
+                if (calculator.isEnough(s.selectedProduct.price, s.sum)) {
                     onEjectProduct(s.selectedProduct)
                     products[s.selectedProduct] = products[s.selectedProduct]!! - 1
                 }
@@ -56,7 +51,7 @@ abstract class AbstractVendingMachine<M, P : Product<M>, C : Coin<M>>(
 
     fun selectProduct(p: P) {
         if (state is Idle && (products[p] ?: 0) > 0) {
-            state = vm.Paying(p, calculator.zero())
+            state = Paying(p, calculator.zero())
         } else {
             onDisplayProductIsOut(p)
         }
